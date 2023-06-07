@@ -18,6 +18,9 @@
     let points = [];
     let rpoints = [];
 
+    // select cropping type
+    let cropType = 'polygon';
+
     onMount(() => {
         ctx = canvas.getContext("2d");
         croppedImgs = document.getElementById("cropped-imgs");
@@ -29,6 +32,8 @@
             var newImg = new Image();
             newImg.onload = function() {
                 canvas.height = (canvas.width/img.width)*img.height;
+                ctx.strokeStyle = "#ED3996";
+                ctx.fillStyle = '#ED399650';
                 ctx.drawImage(newImg,0,0,newImg.width,newImg.height,0,0,canvas.width,canvas.height);
             }
             if (evt.target && typeof(evt.target.result) == 'string') {
@@ -39,7 +44,23 @@
         reader.readAsDataURL(input.files[0]);
     }
 
+    function toggleCrop() {
+        cropType = cropType == 'rectangle' ? 'polygon' : 'rectangle';
+        console.log(cropType);
+        reset();
+    }
+
     function handleMouseDown(e) {
+        if (cropType == 'polygon') {
+            polygonCrop(e);
+        } else if (cropType == 'rectangle') {
+            rectangleCrop(e);
+        } else {
+            console.log('error')
+        }
+    }
+
+    function polygonCrop(e) {
         // tell the browser that we're handling this event
         e.preventDefault();
         e.stopPropagation();
@@ -49,7 +70,6 @@
         let my = e.pageY-canvas.offsetTop;
 
         // push the clicked point to the points[] array
-        // points.push({x:mx,y:my});
         points = [...points, {x:mx,y:my}]
 
         // remove points from redo[] array
@@ -70,14 +90,44 @@
         }
     }
 
+    function rectangleCrop(e) {
+        // tell the browser that we're handling this event
+        e.preventDefault();
+        e.stopPropagation();
+
+        // calculate mouseX & mouseY
+        let mx = e.pageX-canvas.offsetLeft;
+        let my = e.pageY-canvas.offsetTop;
+        
+        // maximum two clicks
+        if (points.length < 2) {
+            // push the clicked point to the points[] array
+            if (points.length == 0) {
+                points = [...points, {x:mx,y:my}]
+            } else {
+                points = [...points, {x:mx,y:points[0].y}, {x:mx,y:my}, {x:points[0].x,y:my}]
+            }
+
+            // show the user an outline of their current clipping path
+            outlineIt();
+        }
+
+        // if the user clicked back in the original circle
+        // then complete the clip
+        if (points.length > 1) {
+            var dx = mx - points[0].x;
+            var dy = my - points[0].y;
+            if ( dx*dx+dy*dy < 10*10 ) {
+                clipIt();
+            }
+        }
+    }
+
     // show the current potential clipping path
     function outlineIt() {
         ctx.drawImage(img,0,0,img.width,img.height,0,0,canvas.width,canvas.height);
 
-        if (points.length > 0) {   
-            ctx.strokeStyle = "#ED3996";
-            ctx.fillStyle = '#ED399650';
-
+        if (points.length > 0) {  
             ctx.beginPath();
             ctx.moveTo(points[0].x,points[0].y);
             for(var i=0; i<points.length; i++){
@@ -175,6 +225,37 @@
         // redraw the image on the main canvas for further clipping
         ctx.drawImage(img,0,0,img.width,img.height,0,0,canvas.width,canvas.height);
     }
+
+    function handleMouseMove(e) {
+        // tell the browser that we're handling this event
+        e.preventDefault();
+        e.stopPropagation();
+
+        // calculate mouseX & mouseY
+        let mx = e.pageX-canvas.offsetLeft;
+        let my = e.pageY-canvas.offsetTop;
+
+        if (img) { 
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.drawImage(img,0,0,img.width,img.height,0,0,canvas.width,canvas.height);
+            outlineIt();
+
+            // draw lines
+            ctx.beginPath();
+                // draw x-axis
+                ctx.moveTo(mx,0);
+                ctx.lineTo(mx, my-10);
+                ctx.moveTo(mx,my+10);
+                ctx.lineTo(mx, canvas.height);
+                // draw y-axis
+                ctx.moveTo(0,my);
+                ctx.lineTo(mx-10, my);
+                ctx.moveTo(mx+10,my);
+                ctx.lineTo(canvas.width, my);
+            ctx.closePath();
+            ctx.stroke(); 
+        }      
+    }
 </script>
 
 <div class="section header">
@@ -187,6 +268,7 @@
             width="500"
             height="750"
             on:mousedown={(e)=>handleMouseDown(e)} 
+            on:mousemove={(e)=>handleMouseMove(e)} 
             style="border:1px solid #d3d3d3;"
             >
         </canvas>
@@ -194,6 +276,8 @@
     <div class="section cropped">
         <input type="file" accept=".jpg, .jpeg, .png" bind:this={input} on:change={onFileSelected}><br>
         <div class="buttons">
+            <button on:click={toggleCrop}>Rectangle</button>
+            <button on:click={toggleCrop}>Polygon</button>
             <button on:click={reset} disabled={points.length == 0}>Reset</button>
             <button on:click={undo} disabled={points.length == 0}><i class="fa-solid fa-rotate-left"></i></button>
             <button on:click={redo} disabled={rpoints.length == 0}><i class="fa-solid fa-rotate-right"></i></button>
