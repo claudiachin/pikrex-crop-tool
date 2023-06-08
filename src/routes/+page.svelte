@@ -1,8 +1,14 @@
 <script>
+    // Code heavily inspired by this: https://stackoverflow.com/questions/27213413/canvas-cropping-images-in-different-shapes
+
     import { onMount } from 'svelte';
 
-    // <input> to upload image
+    // media query
+    let innerWidth;
+
+    // variables for uploading image
     let input;
+    let uploadBtn;
 
     // canvas-related variables
     let canvas;
@@ -18,19 +24,25 @@
     let points = [];
     let rpoints = [];
 
-    // select cropping type
-    let cropType = 'polygon';
+    // variables for selecting cropping type
+    let cropType = 'rectangle';
+    let rectangleBtn, polygonBtn;
+
+    // array to hold all the cropped images
+    let allCrops = [];
 
     onMount(() => {
         ctx = canvas.getContext("2d");
         croppedImgs = document.getElementById("cropped-imgs");
     });
 
-    function onFileSelected() {
+    function onFileSelected(e) {
         const reader = new FileReader();
         reader.addEventListener("load", function (evt) {
             var newImg = new Image();
             newImg.onload = function() {
+                canvas.classList.remove("hide");
+                uploadBtn.classList.add("hide");
                 canvas.height = (canvas.width/img.width)*img.height;
                 ctx.strokeStyle = "#ED3996";
                 ctx.fillStyle = '#ED399650';
@@ -41,12 +53,18 @@
             }
             img = newImg;
         });
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(e.target.files[0]);
     }
 
-    function toggleCrop() {
-        cropType = cropType == 'rectangle' ? 'polygon' : 'rectangle';
-        console.log(cropType);
+    function setCropType(set) {
+        cropType = set;
+        if (set == 'rectangle') {
+            rectangleBtn.classList.add('selected');
+            polygonBtn.classList.remove('selected');
+        } else {
+            rectangleBtn.classList.remove('selected');
+            polygonBtn.classList.add('selected');
+        }
         reset();
     }
 
@@ -120,7 +138,7 @@
             if ( dx*dx+dy*dy < 10*10 ) {
                 clipIt();
             }
-        }
+        } 
     }
 
     // show the current potential clipping path
@@ -192,7 +210,7 @@
         ctx.beginPath();
         ctx.moveTo(points[0].x,points[0].y);
         for(var i=1; i<points.length; i++){
-            var p=points[i];
+            var p = points[i];
             ctx.lineTo(points[i].x,points[i].y);
         }
         ctx.closePath();
@@ -205,25 +223,55 @@
         var cx = c.getContext('2d');
 
         // resize the new canvas to the size of the clipping area
-        c.width=width;
-        c.height=height;
+        c.width = width;
+        c.height = height;
 
         // draw the clipped image from the main canvas to the new canvas
         if (cx) { cx.drawImage(canvas,minX,minY,width,height,0,0,width,height); }
 
         // create a new Image() from the new canvas
-        var clippedImage=new Image();
-        clippedImage.onload=function() {
+        var clippedImage = new Image();
+        clippedImage.onload = function() {
             // append the new image to the page
-            croppedImgs.appendChild(clippedImage);
+            croppedImgs.appendChild(createDiv(clippedImage));
         }
-        clippedImage.src=c.toDataURL();
+        clippedImage.src = c.toDataURL();
+
+        // add to allCrops{}
+        allCrops = [...allCrops, { id:allCrops.length, points:points.slice() }];
 
         // clear the previous points 
-        points.length=0;
+        points.length = 0;
 
         // redraw the image on the main canvas for further clipping
         ctx.drawImage(img,0,0,img.width,img.height,0,0,canvas.width,canvas.height);
+    }
+
+    function createDiv(clippedImage) {
+        clippedImage.id = "crop-"+croppedImgs.children.length;
+
+        let deleteBtn = document.createElement("button");
+        deleteBtn.id = "deleteBtn-"+croppedImgs.children.length;
+        deleteBtn.classList.add('icon-button');
+        deleteBtn.innerHTML = '<i class="fa-solid fa-circle-minus" id="minusIcon-'+croppedImgs.children.length+'"></i>';
+        deleteBtn.addEventListener("click", deleteCrop);
+
+        let div = document.createElement('div');
+        div.classList.add('cropped-img-div');
+        div.id = "cropDiv-"+croppedImgs.children.length;
+        div.appendChild(clippedImage);
+        div.appendChild(deleteBtn);
+
+        return div;
+    }
+
+    function deleteCrop(e) {
+        let idText = e.target.id.split('-');
+        let idNum = idText[idText.length-1];
+
+        allCrops.splice(allCrops.indexOf(allCrops.find(x=>x.id == idNum)), 1);
+        let id = document.getElementById('cropDiv-'+idNum);
+        if (id) { id.remove(); }
     }
 
     function handleMouseMove(e) {
@@ -256,42 +304,66 @@
             ctx.stroke(); 
         }      
     }
+
+    function save() {
+        console.log(JSON.stringify(allCrops));
+    }
+
+    function deleteImage() {
+        canvas.classList.add("hide");
+        uploadBtn.classList.remove("hide");
+        input.value = null;
+        allCrops = [];
+        reset();
+        img = undefined;
+        while (croppedImgs.firstChild) {
+            croppedImgs.removeChild(croppedImgs.firstChild);
+        }
+    }
 </script>
+
+<svelte:window bind:innerWidth={innerWidth}/>
 
 <div class="section header">
     <h2>Pikrex Cropping Tool</h2>
 </div>
-<div class="main-body">
-    <div class="section crop-image">
-        <canvas 
-            bind:this={canvas}
-            width="500"
-            height="750"
-            on:mousedown={(e)=>handleMouseDown(e)} 
-            on:mousemove={(e)=>handleMouseMove(e)} 
-            style="border:1px solid #d3d3d3;"
-            >
-        </canvas>
-    </div>
-    <div class="section cropped">
-        <input type="file" accept=".jpg, .jpeg, .png" bind:this={input} on:change={onFileSelected}><br>
-        <div class="buttons">
-            <button on:click={toggleCrop}>Rectangle</button>
-            <button on:click={toggleCrop}>Polygon</button>
-            <button on:click={reset} disabled={points.length == 0}>Reset</button>
-            <button on:click={undo} disabled={points.length == 0}><i class="fa-solid fa-rotate-left"></i></button>
-            <button on:click={redo} disabled={rpoints.length == 0}><i class="fa-solid fa-rotate-right"></i></button>
+<div class="main-body" class:hide="{innerWidth < 767}">
+    <div class="section left">
+        <div class="canvas">
+            <canvas 
+                bind:this={canvas}
+                width="500"
+                height="750"
+                on:mousedown={(e)=>handleMouseDown(e)} 
+                on:mousemove={(e)=>handleMouseMove(e)} 
+                class="hide"
+                >
+            </canvas>
+            <button class="upload-button" bind:this={uploadBtn} on:click={input.click()}>
+                <i class="fa-solid fa-images"></i>
+                <h6>Upload image</h6>
+            </button>
+            <input type="file" accept=".jpg, .jpeg, .png" class="hide" bind:this={input} on:change={(e)=>onFileSelected(e)}>
         </div>
-        <div class="cropped-imgs">
-            <p>Images cropped:</p>
+        <div class="buttons">
+            <button bind:this={rectangleBtn} on:click={()=>setCropType('rectangle')} disabled={img == undefined} class="icon-button selected" title="Rectangle Crop"><i class="fa-solid fa-crop-simple"></i></button>
+            <button bind:this={polygonBtn} on:click={()=>setCropType('polygon')} disabled={img == undefined} class="icon-button" title="Polygon Crop"><i class="fa-solid fa-draw-polygon"></i></button>
+            <button on:click={reset} disabled={points.length == 0} class="icon-button" title="Reset"><i class="fa-solid fa-broom"></i></button>
+            <button on:click={undo} disabled={points.length == 0} class="icon-button" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+            <button on:click={redo} disabled={rpoints.length == 0} class="icon-button" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+            <button on:click={deleteImage} disabled={img == undefined} class="icon-button" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    </div>
+    <div class="section right">
+        <div>
+            <h6>Images cropped:</h6>
             <div id="cropped-imgs"></div>
         </div>
-        <div class="instructions">
-            <p>Intructions:</p>
-            <p>1. Upload your image.</p>
-            <p>2. </p>
-        </div>
+        <button on:click={save} disabled={allCrops.length == 0} id="save" title="Save"><i class="fa-solid fa-floppy-disk"></i><p>Save</p></button>
     </div>
+</div>
+<div class="section main-body" class:hide="{innerWidth > 767}">
+    <p>Seems like the screen is too small!</p>
 </div>
 <div class="section footer">
     <p>Copyright Pikrex Inc. 2023</p>
@@ -306,7 +378,6 @@
     $pink: #ED3996;
     $light_pink: #FAC7E1;
     $dark_pink: #D51477;
-    $transparent: rgba(0,0,0,0);
 
     // Section styling
     .section {
@@ -327,33 +398,114 @@
         justify-content: center;
         gap: 24px;
 
-        .crop-image {
+        .left {
             flex: 1 0 500px;
 
-            input, canvas {
-                float: right;
+            display: flex;
+            gap: 8px;
+
+            .canvas {
+                canvas {
+                    border: 1px solid #d3d3d3;
+                    cursor: crosshair;
+                }
+            
+                .upload-button {
+                    width: 500px;
+                    height: 750px;
+                    background: transparent;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 8px;
+                    border: 1px solid #d3d3d3;
+
+                    i {
+                        font-size: 64px;
+                    }
+                }
             }
-
-            @media screen and (max-width: 1024px) {
+            
+            justify-content: center;
+            @media screen and (min-width: 1025px) {
+                justify-content: end;
+            }
+            
+            .buttons {
                 display: flex;
-                justify-content: center;
+                flex-direction: column;
+                gap: 8px;
 
-                input, canvas {
-                    float: none;
+                .selected {
+                    color: $pink;
                 }
             }
         }
 
-        .cropped {
+        .right {
             flex: 1 0 400px;
-        }
 
-        canvas {
-            cursor: crosshair;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            #save {
+                display: flex;
+                gap: 8px;
+                justify-content: center;
+                align-items: center;
+                border-radius: 1000px;
+                padding: 8px 32px;
+                border: 2px solid $pink;
+                width: max-content;    
+
+                &:hover {
+                    border: 2px solid $dark-pink;
+                }
+
+                i {
+                    font-size: 16px;
+                    color: $black;
+                }
+            }
+
+            #cropped-imgs {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
         }
     }
 
     button:disabled {
         opacity: 0.5;
+    }
+
+    .hide {
+        display: none !important;
+    }
+
+    :global(.icon-button) {
+        background: transparent;
+        border: none;
+
+        &:hover {
+            color: $dark_pink;
+        }
+        
+        &:disabled {
+            color: $dark_grey;
+        }
+    }
+    :global(.icon-button > i) {
+        font-size: 32px;
+    }
+    :global(.cropped-img-div) {
+        border: solid 2px $light_pink;
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
     }
 </style>
