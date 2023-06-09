@@ -28,12 +28,15 @@
     let cropType = 'rectangle';
     let rectangleBtn, polygonBtn;
 
-    // array to hold all the cropped images
+    // variables to download all the cropped images
     let allCrops = [];
+    let saveBtn;
+    let filename;
 
     onMount(() => {
         ctx = canvas.getContext("2d");
         croppedImgs = document.getElementById("cropped-imgs");
+        saveBtn = document.getElementById("save");
     });
 
     function onFileSelected(e) {
@@ -53,6 +56,7 @@
             }
             img = newImg;
         });
+        filename = e.target.files[0].name.split('.')[0];
         reader.readAsDataURL(e.target.files[0]);
     }
 
@@ -270,6 +274,7 @@
         let idNum = idText[idText.length-1];
 
         allCrops.splice(allCrops.indexOf(allCrops.find(x=>x.id == idNum)), 1);
+        allCrops = allCrops;
         let id = document.getElementById('cropDiv-'+idNum);
         if (id) { id.remove(); }
     }
@@ -306,7 +311,16 @@
     }
 
     function save() {
-        console.log(JSON.stringify(allCrops));
+        var downloadClick = document.createElement('a');
+        downloadClick.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(allCrops)));
+        downloadClick.setAttribute('download', filename+'_crops.json');
+
+        downloadClick.style.display = 'none';
+        document.body.appendChild(downloadClick);
+
+        downloadClick.click();
+
+        document.body.removeChild(downloadClick);
     }
 
     function deleteImage() {
@@ -316,6 +330,7 @@
         allCrops = [];
         reset();
         img = undefined;
+        filename = undefined;
         while (croppedImgs.firstChild) {
             croppedImgs.removeChild(croppedImgs.firstChild);
         }
@@ -458,7 +473,8 @@
                 border-radius: 1000px;
                 padding: 8px 32px;
                 border: 2px solid $pink;
-                width: max-content;    
+                width: max-content;   
+                background: transparent; 
 
                 &:hover {
                     border: 2px solid $dark-pink;
