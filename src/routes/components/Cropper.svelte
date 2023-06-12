@@ -19,7 +19,10 @@
 
     // an array to hold user's click-points that define the clipping area
     let points = [];
+
+    // variables for undo-ing and redo-ing
     let rpoints = [];
+    let prevMove;
 
     // variables for selecting cropping type
     let cropType = 'rectangle';
@@ -93,6 +96,9 @@
         rpoints.length = 0
         rpoints = rpoints;
 
+        // set prevMove
+        prevMove = 'polygon';
+
         // show the user an outline of their current clipping path
         outlineIt();
 
@@ -118,11 +124,13 @@
         
         // maximum two clicks
         if (points.length < 2) {
-            // push the clicked point to the points[] array
+            // push the clicked point to the points[] array and set prevMove
             if (points.length == 0) {
                 points = [...points, {x:mx,y:my}]
+                prevMove = 'draw1';
             } else {
                 points = [...points, {x:mx,y:points[0].y}, {x:mx,y:my}, {x:points[0].x,y:my}]
+                prevMove = 'draw3';
             }
 
             // show the user an outline of their current clipping path
@@ -164,18 +172,42 @@
 
     // removes a point from points[] and adds it to rpoints[]
     function undo() {
+        if (prevMove == 'draw3') {
+            undoo();
+            undoo();
+            undoo();
+            prevMove = 'undo3';
+        } else {
+            undoo();
+            prevMove = 'undo1';
+        }
+        outlineIt();
+    }
+
+    function undoo() {
         var move = points.pop();
         points = points;
         rpoints = [...rpoints, move];
-        outlineIt();
     }
 
     // removes a point from rpoints[] and adds it to points[]
     function redo() {
+        if (prevMove == 'undo3') {
+            redoo();
+            redoo();
+            redoo();
+            prevMove = 'draw3';
+        } else {
+            redoo();
+            prevMove = 'draw1';
+        }
+        outlineIt();
+    }
+
+    function redoo() {
         var move = rpoints.pop();
         rpoints = rpoints;
         points = [...points, move];
-        outlineIt();
     }
 
     function reset() {
