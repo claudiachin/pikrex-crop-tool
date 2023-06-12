@@ -1,4 +1,19 @@
-# create-svelte
+# Pikrex Cropping Tool
+Polygon and rectangle cropping to help get the frames and text bubbles of manga pages.
+
+## How to run
+1. Clone the GitHub
+2. npm install all relevant files
+```
+cd pikrex-website
+npm i
+```
+3. Run the app
+```
+npm run dev
+```
+
+<!-- # create-svelte
 
 Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
 
@@ -35,4 +50,4 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment. -->
