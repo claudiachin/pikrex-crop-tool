@@ -16,10 +16,6 @@
     }
 </script>
 
-<svelte:head>
-    <link rel="stylesheet" href="%sveltekit.assets%/cropped.scss" />
-</svelte:head>
-
 <div class="section cropped-images-wrapper">
     <div>
         <h6>Images cropped:</h6>

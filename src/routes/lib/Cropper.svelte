@@ -358,10 +358,6 @@
     }
 </script>
 
-<svelte:head>
-    <link rel="stylesheet" href="%sveltekit.assets%/cropper.scss" />
-</svelte:head>
-
 <div class="section cropper-wrapper">
     <div class="canvas">
         <canvas 
