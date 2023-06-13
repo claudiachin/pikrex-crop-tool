@@ -10,6 +10,8 @@
     // canvas-related variables
     let canvas;
     let ctx;
+    export let cwidth;
+    export let cheight;
 
     // image to be cropped
     let img;
@@ -35,6 +37,8 @@
     onMount(() => {
         ctx = canvas.getContext("2d");
         croppedImgs = document.getElementById("cropped-imgs");
+
+        console.log(typeof cwidth);
     });
 
     function onFileSelected(e) {
@@ -354,18 +358,22 @@
     }
 </script>
 
+<svelte:head>
+    <link rel="stylesheet" href="%sveltekit.assets%/cropper.scss" />
+</svelte:head>
+
 <div class="section cropper-wrapper">
     <div class="canvas">
         <canvas 
             bind:this={canvas}
-            width="500"
-            height="750"
+            width={cwidth}
+            height={cheight}
             on:mousedown={(e)=>handleMouseDown(e)} 
             on:mousemove={(e)=>handleMouseMove(e)} 
             class="hide"
             >
         </canvas>
-        <button class="upload-button" bind:this={uploadBtn} on:click={input.click()}>
+        <button class="upload-button" bind:this={uploadBtn} on:click={input.click()} style={"width:"+cwidth+"px;height:"+cheight+"px;"}>
             <i class="fa-solid fa-images"></i>
             <h6>Upload image</h6>
         </button>
@@ -380,84 +388,3 @@
         <button on:click={deleteImage} disabled={img == undefined} class="icon-button" title="Delete"><i class="fa-solid fa-trash"></i></button>
     </div>
 </div>
-
-<style>
-    .cropper-wrapper {
-        flex: 1 0 500px;
-
-        display: flex;
-        justify-content: center;
-
-        gap: 8px;
-    }
-
-    @media screen and (min-width: 1025px) {
-        .cropper-wrapper {
-            justify-content: end;
-        }
-    }
-    
-    .canvas canvas {
-        border: 1px solid #D3D3D3;
-        cursor: crosshair;
-    }
-            
-    .canvas .upload-button {
-        width: 500px;
-        height: 750px;
-        background: transparent;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        border: 1px solid #D3D3D3;
-    }
-
-    .canvas .upload-button i {
-        font-size: 64px;
-    }
-
-    .buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .selected {
-        color: #ED3996;
-    }
-    
-    button:disabled {
-        opacity: 0.5;
-    }
-    
-    .hide {
-        display: none !important;
-    }
-
-    :global(.icon-button) {
-        background: transparent;
-        border: none;
-    }
-
-    :global(.icon-button):hover {
-        color: #D51477;
-    }
-        
-    :global(.icon-button):disabled {
-        color: #404040;
-    }
-    
-    :global(.icon-button > i) {
-        font-size: 32px;
-    }
-
-    :global(.cropped-img-div) {
-        border: solid 2px #FAC7E1;
-        padding: 16px;
-        border-radius: 8px;
-        display: flex;
-        justify-content: space-between;
-    }
-</style>

@@ -16,6 +16,10 @@
     }
 </script>
 
+<svelte:head>
+    <link rel="stylesheet" href="%sveltekit.assets%/cropped.scss" />
+</svelte:head>
+
 <div class="section cropped-images-wrapper">
     <div>
         <h6>Images cropped:</h6>
@@ -23,44 +27,3 @@
     </div>
     <button on:click={save} disabled={allCrops.length == 0} id="save" title="Save"><i class="fa-solid fa-floppy-disk"></i><p>Save</p></button>
 </div>
-
-<style>
-    .cropped-images-wrapper {
-        flex: 1 0 400px;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .cropped-images-wrapper #save {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
-        border-radius: 1000px;
-        padding: 8px 32px;
-        border: 2px solid #ED3996;
-        width: max-content;   
-        background: transparent; 
-    }
-
-    .cropped-images-wrapper #save:hover {
-        border: 2px solid #D51477;
-    }
-
-    .cropped-images-wrapper i {
-        font-size: 16px;
-        color: #000000;
-    }
-
-    #cropped-imgs {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    button:disabled {
-        opacity: 0.5;
-    }
-</style>

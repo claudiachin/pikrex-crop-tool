@@ -1,6 +1,6 @@
 <script>
-	import Cropper from './components/Cropper.svelte';
-	import Cropped from './components/Cropped.svelte';
+	import Cropper from './lib/Cropper.svelte';
+	import Cropped from './lib/Cropped.svelte';
 
     // variables to download all the cropped images
     let allCrops = [];
@@ -18,7 +18,7 @@
 </div>
 <!-- App can only be used on tablet size and up. -->
 <div class="main-body" class:hide="{innerWidth < 767}">
-    <Cropper bind:allCrops={allCrops} bind:filename={filename}/>
+    <Cropper cwidth=500 cheight=750 allCrops={allCrops} bind:filename={filename}/>
     <Cropped bind:allCrops={allCrops} bind:filename={filename}/>
 </div>
 <div class="section main-body" class:hide="{innerWidth > 767}">
@@ -28,15 +28,13 @@
     <p>Copyright Pikrex Inc. 2023</p>
 </div>
 
-<style lang="scss">
-
-    // Header and Footer
-    .header, .footer {
+<style>
+    .header,
+    .footer {
         display: grid;
         place-items: center;
     }
 
-    // Main Body
     .main-body {
         background: #FFFFFF;
         display: flex;
@@ -47,5 +45,11 @@
 
     .hide {
         display: none !important;
+    }
+
+    @media screen and (min-width: 1025px) {
+        :global(.cropper-wrapper) {
+            justify-content: end;
+        }
     }
 </style>
