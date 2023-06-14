@@ -48,7 +48,7 @@
 
     @media screen and (min-width: 1025px) {
         :global(.cropper-wrapper) {
-            justify-content: end;
+            justify-content: end !important;
         }
     }
 </style>
