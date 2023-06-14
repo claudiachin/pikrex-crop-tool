@@ -1,6 +1,5 @@
 <script>
-	import Cropper from '../lib/Cropper.svelte';
-	import Cropped from '../lib/Cropped.svelte';
+    import {Cropper, Cropped} from 'polygon-crop-tool';
 
     // variables to download all the cropped images
     let allCrops = [];
