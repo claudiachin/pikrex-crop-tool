@@ -10,16 +10,20 @@ f = open('pikrex-crop-tool/tests/sousounofrieren_vol1_c1_page3_crops.json')
 all_crops = json.load(f)
 all_crops_cleaned = []
 
-for crop in all_crops:
+canvas_width = all_crops[0]['cwidth']
+canvas_height = all_crops[0]['cheight']
+
+for crop in all_crops[1:]:
     points_cleaned = []
     for point in crop['points']:
-        point_x = round(point['x']/500*img_width) if point['x'] > 0 else 0
-        point_y = round(point['y']/500*img_width) if point['y'] > 0 else 0
+        ## scaling 
+        ## in the cropping app, the image scales to the canvas width, affecting the points
+        ## hence we need to scale the points back to the correct image size
+        point_x = round(point['x']/canvas_width*img_width) if point['x'] > 0 else 0
+        point_y = round(point['y']/canvas_height*img_height) if point['y'] > 0 else 0
         points_cleaned.append([point_x, point_y])
     all_crops_cleaned.append(points_cleaned)
 
-print('width:  ', img_width)
-print('height: ', img_height)
 for i in range(len(all_crops_cleaned)):
     pts = np.array(all_crops_cleaned[i])
 
