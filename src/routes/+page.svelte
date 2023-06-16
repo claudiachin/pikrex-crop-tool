@@ -53,10 +53,10 @@
     }
 
     .header img {
-        height: 60px;
+        height: 48px;
     }
 
-    .footer {
+    .footer p {
         color: $white;
     }
 
@@ -91,7 +91,7 @@
         border: solid 2px $blue !important;
     }
 
-    :global(#save) {
+    :global(.save-buttons > button) {
         border-radius: 1000px;
         padding: 8px 32px;
         border: 2px solid $pink;

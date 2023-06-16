@@ -30,7 +30,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"polygon-crop-tool": "^0.0.9",
+		"polygon-crop-tool": "^1.0.1",
 		"sass": "^1.63.4"
 	}
 }
